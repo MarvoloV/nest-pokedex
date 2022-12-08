@@ -9,11 +9,14 @@ import { isValidObjectId, Model } from 'mongoose';
 import { CreatePokemonDto } from './dto/create-pokemon.dto';
 import { UpdatePokemonDto } from './dto/update-pokemon.dto';
 import { Pokemon } from './entities/pokemon.entity';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class PokemonService {
   constructor(
     @InjectModel(Pokemon.name) private readonly pokemonModel: Model<Pokemon>,
+    private readonly configService: ConfigService,
   ) {}
   async create(createPokemonDto: CreatePokemonDto) {
     createPokemonDto.name = createPokemonDto.name.toLocaleLowerCase();
@@ -25,8 +28,9 @@ export class PokemonService {
     }
   }
 
-  async findAll() {
-    return await this.pokemonModel.find();
+  async findAll(paginationDto: PaginationDto) {
+    const { limit = 10, offset = 0 } = paginationDto;
+    return await this.pokemonModel.find().limit(limit).skip(offset).sort();
   }
 
   async findOne(term: string) {
@@ -76,10 +80,6 @@ export class PokemonService {
         `Pokemon exist in db ${JSON.stringify(error.keyValue)}`,
       );
     }
-    console.log(
-      '🚀 ~ file: pokemon.service.ts ~ line 19 ~ PokemonService ~ create ~ error',
-      error,
-    );
     throw new InternalServerErrorException(
       `Can´t Update Pokemon - Check Server logs`,
     );
